@@ -19,12 +19,19 @@
 #include <iostream>
 
 
+enum ProcessBitness { WIN32, WIN64 };
+
+
 bool DLLExists() {
 	return false;
 }
 
 bool TargetUsesMono() {
 	return false;
+}
+
+ProcessBitness TargetBitness() {
+	return WIN64;
 }
 
 
