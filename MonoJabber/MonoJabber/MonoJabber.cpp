@@ -16,21 +16,27 @@
 // Also determine if the bitness of the target matches the bitness of the injector.
 
 #include "pch.h"
+#include "MonoJabber.h"
 #include <iostream>
+#include "stdafx.h"
+#include <windows.h>
+#include <sys/stat.h>
+#include "mProcess.h"
+#include "mMemory.h"
 
-typedef enum {
-	UNKNOWN,
-	WIN32,
-	WIN64
-} processBitness_t;
-
-
-bool DoesDLLExist() {
-	return false;
+int EndApplication() {
+	std::getchar();
+	return 0;
 }
 
-bool DoesTargetUseMono() {
-	return false;
+
+bool DoesDLLExist(const char **DLL_PATH) {
+	struct stat st;
+	return stat(*DLL_PATH, &st) == 0;
+}
+
+bool DoesTargetUseMono(HANDLE &TARGET_HANDLE) {
+	return mProcessFunctions::mGetModuleAddress(TARGET_HANDLE, "mono-2.0-bdwgc.dll") != NULL;
 }
 
 processBitness_t GetTargetBitness() {
@@ -39,19 +45,45 @@ processBitness_t GetTargetBitness() {
 
 
 int main(int argc, char* argv[]) {
-	struct LoaderArguments {
-		char DLL_PATH[250];
-		char LOADER_NAMESPACE[250];
-		char LOADER_CLASSNAME[250];
-		char LOADER_METHODNAME[250];
-	};
-	LoaderArguments lArgs;
-
+	printf("-MonoJabber-");
+	/*
+	const char *targetProcess, *dllPath, *payloadNamespace, *payloadClassname, *payloadMethodname = NULL;
 	if (argc == 4) {
-		// Validate all the passed arguments
-		//	also Make sure the DLL and the target application share the same bitness
+		targetProcess =		argv[1];
+		dllPath =			argv[2];
+		payloadNamespace =	argv[3];
+		payloadClassname =	argv[4];
+		payloadMethodname =	argv[5];
 	} else {
-		// Error out
+		printf(
+			"Error: Application requires five arguments: {TargetProcess} {Path to Payload DLL} "
+			"{PayloadNamespace} {PayloadClassname} {PayloadMethodname}\n"
+		);
+		EndApplication();
 	}
 
+	int injecteePID = mProcessFunctions::mGetPID(targetProcess);
+
+	if (injecteePID == NULL) {
+		printf("Error: Failed to get target PID. Check if it's running and try again.\n" 
+			"LastErrorCode: %i - see https://bit.ly/2DuwywP", GetLastError()
+		);
+		EndApplication();
+	}
+
+	HANDLE injecteeHandle = OpenProcess(PROCESS_CREATE_THREAD | PROCESS_QUERY_INFORMATION | PROCESS_VM_OPERATION
+		| PROCESS_VM_WRITE | PROCESS_VM_READ, FALSE, injecteePID);
+
+	bool handleIsValid = mProcessFunctions::mValidateHandle(injecteeHandle);
+	if (!handleIsValid) {
+		printf("Error: Failed to get a handle to the target process. Are you running as admin?"
+			"LastErrorCode: %i - see https://bit.ly/2DuwywP", GetLastError()
+		);
+		EndApplication();
+	}
+
+
+
+	printf("");
+	*/
 }

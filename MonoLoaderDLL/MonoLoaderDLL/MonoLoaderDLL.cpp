@@ -9,11 +9,6 @@
 #include <string>
 
 
-void EjectSelf() {
-
-}
-
-
 void InitMonoFunctions(const HMODULE &MONO_HANDLE, MonoFunctions &MONO_FUNCTIONS) {
 	MONO_FUNCTIONS.mGetRootDomain = (t_mono_get_root_domain)GetProcAddress(MONO_HANDLE, "mono_get_root_domain");
 	MONO_FUNCTIONS.mAssemblyOpen = (t_mono_assembly_open)GetProcAddress(MONO_HANDLE, "mono_assembly_open");
@@ -87,7 +82,5 @@ void Inject(void* loaderArguments) {
 		LoadAndInvokePayload(resultMessage, *args, monoFunctions);
 	}
 
-	resultMessage += "\n\nLoader DLL will eject itself upon pressing 'OK'.";
 	MessageBox(NULL, resultMessage.c_str(), "Operation Result", MB_OK);
-	EjectSelf();
 }
