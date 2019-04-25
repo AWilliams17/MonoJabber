@@ -12,7 +12,6 @@ BOOL APIENTRY DllMain( HMODULE hModule,
     case DLL_THREAD_ATTACH:
     case DLL_THREAD_DETACH:
     case DLL_PROCESS_DETACH:
-		MessageBox(NULL, "DLL Has been detached.", "Disconnected", MB_OK);
         break;
     }
     return TRUE;

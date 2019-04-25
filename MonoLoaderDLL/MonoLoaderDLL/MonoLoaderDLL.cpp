@@ -1,5 +1,5 @@
 // MonoLoaderDLL.cpp : Defines the exported functions for the DLL application.
-//
+// TODO: Ejection function
 
 #include "stdafx.h"
 #include "MonoLoaderDLL.h"
