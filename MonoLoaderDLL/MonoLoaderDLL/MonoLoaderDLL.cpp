@@ -3,10 +3,10 @@
 
 #include "stdafx.h"
 #include "MonoLoaderDLL.h"
-#include <WinUser.h>
 #include "MonoTypes.h"
 #include <iostream>
 #include <string>
+#include <WinUser.h>
 
 
 void InitMonoFunctions(const HMODULE &MONO_HANDLE, MonoFunctions &MONO_FUNCTIONS) {

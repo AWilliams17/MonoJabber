@@ -6,17 +6,18 @@
 // arg 4: Payload Classname
 // arg 5: Payload Methodname
 
-// TODO: Organize these
+
 #include "pch.h"
-#include "MonoJabber.h"
-#include <iostream>
 #include "stdafx.h"
-#include <windows.h>
-#include <sys/stat.h>
+#include "MonoJabber.h"
 #include "mProcess.h"
 #include "mMemory.h"
-#include <Tlhelp32.h>
+#include <iostream>
 #include <psapi.h>
+#include <sys/stat.h>
+#include <Tlhelp32.h>
+#include <windows.h>
+
 
 void EndApplication() {
 	std::getchar();
@@ -30,6 +31,15 @@ bool DoesDLLExist(const char **DLL_PATH) {
 
 bool DoesTargetUseMono(HANDLE &TARGET_HANDLE) {
 	return mProcessFunctions::mGetModuleAddress(TARGET_HANDLE, "mono-2.0-bdwgc.dll") != NULL;
+}
+
+uintptr_t GetMonoLoaderFuncAddress(const std::string &MONO_LOADER_DLL_PATH, const HANDLE &INJECTEE_HANDLE) {
+	HMODULE loaderModule = LoadLibraryEx(MONO_LOADER_DLL_PATH.c_str(), NULL, DONT_RESOLVE_DLL_REFERENCES);
+	uintptr_t funcOffset = mProcessFunctions::mGetExportedFunctionOffset(loaderModule, "Inject");
+	uintptr_t injectedLoaderBase = mProcessFunctions::mGetModuleAddress(INJECTEE_HANDLE, "MonoLoaderDLL.dll");
+	uintptr_t funcAddress = injectedLoaderBase + funcOffset;
+	FreeLibrary(loaderModule);
+	return funcAddress;
 }
 
 std::string GetMonoLoaderDLLPath() {
@@ -58,7 +68,7 @@ LoaderArguments CreateArgsStruct(char* program_args[]) {
 
 
 int main(int argc, char* argv[]) {
-	printf("-MonoJabber-\n");
+	printf("	-=MonoJabber=-\n");
 
 	if (argc != 6) {
 		printf(
@@ -118,14 +128,10 @@ int main(int argc, char* argv[]) {
 		EndApplication();
 	}
 
-	// Grab MonoLoaderDLL.dll's Inject method offset, add it to the injectee's base, then call it with the param struct.
-	HMODULE loaderModule = LoadLibraryEx(monoLoaderDLLPath.c_str(), NULL, DONT_RESOLVE_DLL_REFERENCES);
-	uintptr_t funcOffset = mProcessFunctions::mGetExportedFunctionOffset(loaderModule, "Inject");
-	uintptr_t injectedLoaderBase = mProcessFunctions::mGetModuleAddress(injecteeHandle, "MonoLoaderDLL.dll");
-	CreateRemoteThread(injecteeHandle, NULL, 0, (LPTHREAD_START_ROUTINE)(injectedLoaderBase + funcOffset), addressOfParams, 0, NULL);
-
-	// Clean it up.
-	FreeLibrary(loaderModule);
+	// Grab MonoLoaderDLL.dll's Inject method offset, add it to the injectee's base, 
+	// call it with the param struct, then close the handle.
+	uintptr_t targetFunctionAddress = GetMonoLoaderFuncAddress(monoLoaderDLLPath, injecteeHandle);
+	CreateRemoteThread(injecteeHandle, NULL, 0, (LPTHREAD_START_ROUTINE)(targetFunctionAddress), addressOfParams, 0, NULL);
 	CloseHandle(injecteeHandle);
 
 	printf("\nDone. A MessageBox should have been spawned from the injected application with an error/success message.");
