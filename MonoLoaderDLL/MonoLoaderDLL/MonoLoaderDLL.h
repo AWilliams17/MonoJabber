@@ -1,5 +1,5 @@
 #pragma once
-#include "mono_types.h"
+#include "monoTypes.h"
 #ifdef _EXPORTS
 #define EXPORT extern "C" __declspec(dllexport)
 #else  
@@ -24,4 +24,4 @@ typedef struct MonoFunctions {
 	t_mono_runtime_invoke				mRuntimeInvoke;
 } MonoFunctions;
 
-EXPORT void InjectLoader(void* LoaderArguments);
+EXPORT void Inject(void* LoaderArguments);

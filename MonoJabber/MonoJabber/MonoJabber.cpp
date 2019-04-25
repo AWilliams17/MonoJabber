@@ -18,23 +18,40 @@
 #include "pch.h"
 #include <iostream>
 
+typedef enum {
+	UNKNOWN,
+	WIN32,
+	WIN64
+} processBitness_t;
 
-enum ProcessBitness { WIN32, WIN64 };
 
-
-bool DLLExists() {
+bool DoesDLLExist() {
 	return false;
 }
 
-bool TargetUsesMono() {
+bool DoesTargetUseMono() {
 	return false;
 }
 
-ProcessBitness TargetBitness() {
+processBitness_t GetTargetBitness() {
 	return WIN64;
 }
 
 
 int main(int argc, char* argv[]) {
-	
+	struct LoaderArguments {
+		char DLL_PATH[250];
+		char LOADER_NAMESPACE[250];
+		char LOADER_CLASSNAME[250];
+		char LOADER_METHODNAME[250];
+	};
+	LoaderArguments lArgs;
+
+	if (argc == 4) {
+		// Validate all the passed arguments
+		//	also Make sure the DLL and the target application share the same bitness
+	} else {
+		// Error out
+	}
+
 }
