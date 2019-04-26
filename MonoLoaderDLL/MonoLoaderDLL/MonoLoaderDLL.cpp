@@ -1,5 +1,4 @@
 // MonoLoaderDLL.cpp : Defines the exported functions for the DLL application.
-// TODO: Ejection function
 
 #include "stdafx.h"
 #include "MonoLoaderDLL.h"
@@ -18,7 +17,6 @@ void InitMonoFunctions(const HMODULE &MONO_HANDLE, MonoFunctions &MONO_FUNCTIONS
 	MONO_FUNCTIONS.mMethodFromName = (t_mono_class_get_method_from_name)GetProcAddress(MONO_HANDLE, "mono_class_get_method_from_name");
 	MONO_FUNCTIONS.mRuntimeInvoke = (t_mono_runtime_invoke)GetProcAddress(MONO_HANDLE, "mono_runtime_invoke");
 }
-
 
 bool LoadAndInvokePayload(std::string &result_buffer, const LoaderArguments &LOADER_ARGS, const MonoFunctions &MONO_FUNCTIONS) {
 	MonoDomain* mDomain = MONO_FUNCTIONS.mGetRootDomain();
@@ -59,12 +57,11 @@ bool LoadAndInvokePayload(std::string &result_buffer, const LoaderArguments &LOA
 	return true;
 }
 
-
 void Inject(void* loaderArguments) {
 	// Setup the args struct (this assumes the caller has validated all the arguments within before calling)
 	struct LoaderArguments* args = (struct LoaderArguments*)loaderArguments;
 	
-	// Set up result buffer
+	// Set up the result variable
 	std::string resultMessage = "";
 
 	MonoFunctions monoFunctions;

@@ -6,7 +6,6 @@
 // arg 4: Payload Classname
 // arg 5: Payload Methodname
 
-
 #include "pch.h"
 #include "stdafx.h"
 #include "MonoJabber.h"
@@ -18,7 +17,6 @@
 #include <sys/stat.h>
 #include <Tlhelp32.h>
 #include <windows.h>
-
 
 
 void EndApplication() {
@@ -68,7 +66,6 @@ LoaderArguments CreateArgsStruct(char* program_args[]) {
 	return loaderArgs;
 }
 
-
 bool IsTarget64Bit(const HANDLE &TARGET_PROCESS) {
 	// IsWow64Process:
 	//		If we are on a 64 bit OS:
@@ -76,8 +73,7 @@ bool IsTarget64Bit(const HANDLE &TARGET_PROCESS) {
 	//		If we are on a 32 bit OS:
 	//			it returns false if the target is 32 bit
 	// So determine the bitness of the operating system, and return based off of that.
-	// NOTE: This function ignores cases for when dwProcessorType == UNKNOWN.
-
+	// NOTE: This function ignores cases for when wProcessorArchitecture == UNKNOWN.
 	SYSTEM_INFO sysInfo;
 	GetNativeSystemInfo(&sysInfo);
 	BOOL is64Bit = FALSE;
@@ -92,7 +88,6 @@ bool IsTarget64Bit(const HANDLE &TARGET_PROCESS) {
 		return false;
 	}
 }
-
 
 int main(int argc, char* argv[]) {
 	printf("	-=MonoJabber=-\n");
