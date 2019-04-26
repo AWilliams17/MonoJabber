@@ -1,4 +1,11 @@
 #pragma once
+BOOL Is64Bit(void) {
+	#if defined(_WIN64)
+		return TRUE;   // 64-bit program
+	return FALSE;
+	#endif
+}
+
 struct LoaderArguments {
 	char DLL_PATH[250];
 	char LOADER_NAMESPACE[250];

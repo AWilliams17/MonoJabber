@@ -14,9 +14,11 @@
 #include "mMemory.h"
 #include <iostream>
 #include <psapi.h>
+#include <sysinfoapi.h>
 #include <sys/stat.h>
 #include <Tlhelp32.h>
 #include <windows.h>
+
 
 
 void EndApplication() {
@@ -67,6 +69,31 @@ LoaderArguments CreateArgsStruct(char* program_args[]) {
 }
 
 
+bool IsTarget64Bit(const HANDLE &TARGET_PROCESS) {
+	// IsWow64Process:
+	//		If we are on a 64 bit OS:
+	//			it returns true if the target is 32 bit, false if it is 64 bit
+	//		If we are on a 32 bit OS:
+	//			it returns false if the target is 32 bit
+	// So determine the bitness of the operating system, and return based off of that.
+	// NOTE: This function ignores cases for when dwProcessorType == UNKNOWN.
+
+	SYSTEM_INFO sysInfo;
+	GetNativeSystemInfo(&sysInfo);
+	BOOL is64Bit = FALSE;
+
+	if (sysInfo.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64 || 
+		sysInfo.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_IA64 ||
+		sysInfo.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_ARM64) {
+		IsWow64Process(TARGET_PROCESS, &is64Bit);
+		return !is64Bit ? true : false; // If it is false, it is 64 bit. otherwise, its 32 bit
+	}
+	else {
+		return false;
+	}
+}
+
+
 int main(int argc, char* argv[]) {
 	printf("	-=MonoJabber=-\n");
 
@@ -109,6 +136,11 @@ int main(int argc, char* argv[]) {
 		printf("Error: Failed to get a handle to the target process. Are you running as admin?"
 			"LastErrorCode: %i - see https://bit.ly/2DuwywP \n", GetLastError()
 		);
+		EndApplication();
+	}
+
+	if (!IsTarget64Bit(injecteeHandle)) {
+		printf("Error: The target is a 32 bit process - This tool does not (currently) support this.");
 		EndApplication();
 	}
 

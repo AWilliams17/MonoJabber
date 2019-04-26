@@ -83,4 +83,5 @@ void Inject(void* loaderArguments) {
 	}
 
 	MessageBox(NULL, resultMessage.c_str(), "Operation Result", MB_OK);
+	FreeLibraryAndExitThread(NULL, 0);
 }
