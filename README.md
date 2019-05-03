@@ -34,4 +34,4 @@ https://www.unknowncheats.me/forum/unity/268053-mono-unity-injector.html
 https://www.unknowncheats.me/forum/general-programming-and-reversing/105244-accessing-c-mono.html  
 
 # License  
-This library is licensed under version 3 of the General Public License. You are free to do whatever you wish the code in this library. No credit due.
+This library is licensed under version 3 of the General Public License. You are free to do whatever you wish the code in this application. No credit due.
