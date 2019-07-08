@@ -3,7 +3,10 @@ This is an effort to produce my own DLL injector for usage with games using the 
 At the moment, it only supports modern Unity games (that is, games which use mono-2.0-bdwgc.dll).  
 
 # Usage
-Download the currently released version from the releases page. **Make sure MonoLoaderDLL.dll and MonoJabber.exe are in the same folder.** At the moment, **this tool has been written under & made with a 64 bit version of Windows in mind.**   
+*Note: The injector uses a separate library I've written called MemTools, so you'll have to [**go and compile that (make sure it's a release build you use).**](https://github.com/AWilliams17/MemTools)
+The initial release on the releases page includes the build of MemTools I used while developing that version, but it's unlikely I'll include that DLL in the next release (when/if it ever is made).*
+
+Download the currently released version from the releases page. **Make sure MonoLoaderDLL.dll, MemTools.DLL, and MonoJabber.exe are in the same folder.** At the moment, **this tool has been written under & made with a 64 bit version of Windows in mind.**   
 It does not support 32 bit processes.  
 
 I've tested this extensively using a hack I wrote for SCP: Secret Laboratory, and I've had much success. If you find any bugs please do open an issue, or contact me.  

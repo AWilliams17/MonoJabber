@@ -106,6 +106,9 @@ int main(int argc, char* argv[]) {
 	LoaderArguments lArgs = CreateArgsStruct(argv);
 
 	int injecteePID = mProcessFunctions::mGetPID(targetProcess);
+	int DEBUG_PID = mProcessFunctions::mGetPID("SCPSL.exe");
+	int DEBUG_PID2 = mProcessFunctions::mGetPID("SCPSL");
+	int h = 5;
 	if (injecteePID == NULL) {
 		printf("Error: Failed to get target PID. Check if it's running and try again.\n" 
 			"LastErrorCode: %i - see https://bit.ly/2DuwywP", GetLastError()
