@@ -8,6 +8,8 @@
 #include <WinUser.h>
 
 
+bool showMessageBox;
+
 void InitMonoFunctions(const HMODULE &MONO_HANDLE, MonoFunctions &MONO_FUNCTIONS) {
 	MONO_FUNCTIONS.mGetRootDomain = (t_mono_get_root_domain)GetProcAddress(MONO_HANDLE, "mono_get_root_domain");
 	MONO_FUNCTIONS.mAssemblyOpen = (t_mono_assembly_open)GetProcAddress(MONO_HANDLE, "mono_assembly_open");
@@ -79,6 +81,10 @@ void Inject(void* loaderArguments) {
 		LoadAndInvokePayload(resultMessage, *args, monoFunctions);
 	}
 
-	MessageBox(NULL, resultMessage.c_str(), "Operation Result", MB_OK);
+	// This will remain commented out until I figure out why it is unstable at times and stable other times.
+	// Or, alternatively, I figure out a way to just store the result somewhere and have MonoJabber read it.
+	// That's probably easier.
+	//		MessageBox(NULL, resultMessage.c_str(), "Operation Result", MB_OK);
+
 	FreeLibraryAndExitThread(NULL, 0);
 }

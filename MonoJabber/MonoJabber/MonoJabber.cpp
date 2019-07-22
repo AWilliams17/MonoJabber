@@ -94,7 +94,7 @@ int main(int argc, char* argv[]) {
 
 	if (argc != 6) {
 		printf(
-			"Error: Application requires five arguments: {TargetProcess} {Path to Payload DLL} "
+			"Error: Application requires six arguments: {TargetProcess} {Path to Payload DLL} "
 			"{PayloadNamespace} {PayloadClassname} {PayloadMethodname}\n"
 		);
 		EndApplication();
@@ -170,5 +170,5 @@ int main(int argc, char* argv[]) {
 	}
 	CloseHandle(injecteeHandle);
 
-	printf("\nDone. A MessageBox should have been spawned from the injected application with an error/success message.\n");
+	printf("Done.\n");
 }

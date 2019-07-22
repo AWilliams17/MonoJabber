@@ -11,4 +11,5 @@ struct LoaderArguments {
 	char LOADER_NAMESPACE[250];
 	char LOADER_CLASSNAME[250];
 	char LOADER_METHODNAME[250];
+	bool SHOW_MESSAGEBOX;
 };
