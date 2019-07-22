@@ -108,7 +108,7 @@ int main(int argc, char* argv[]) {
 	int injecteePID = mProcessFunctions::mGetPID(targetProcess);
 	if (injecteePID == NULL) {
 		printf("Error: Failed to get target PID. Check if it's running and try again.\n" 
-			"LastErrorCode: %i - see https://bit.ly/2DuwywP", GetLastError()
+			"LastErrorCode: %i\n", GetLastError()
 		);
 		EndApplication();
 	}
@@ -130,21 +130,21 @@ int main(int argc, char* argv[]) {
 	bool handleIsValid = mProcessFunctions::mValidateHandle(injecteeHandle);
 	if (!handleIsValid) {
 		printf("Error: Failed to get a handle to the target process. Are you running as admin?"
-			"LastErrorCode: %i - see https://bit.ly/2DuwywP \n", GetLastError()
+			"LastErrorCode: %i\n", GetLastError()
 		);
 		EndApplication();
 	}
 	printf("Target handle opened.\n");
 
 	if (!IsTarget64Bit(injecteeHandle)) {
-		printf("Error: The target is a 32 bit process - This tool does not (currently) support this.");
+		printf("Error: The target is a 32 bit process - This tool does not (currently) support this.\n");
 		EndApplication();
 	}
 
 	// Inject MonoLoaderDLL.dll into the injectee
 	if (!mMemoryFunctions::mInjectDLL(targetProcess, monoLoaderDLLPath)) {
 		printf("Error: Failed to inject MonoLoaderDLL.dll into the target process. Are you running as admin?"
-			"LastErrorCode: %i - see https://bit.ly/2DuwywP \n", GetLastError()
+			"LastErrorCode: %i\n", GetLastError()
 		);
 		EndApplication();
 	}
@@ -154,7 +154,7 @@ int main(int argc, char* argv[]) {
 	LPVOID addressOfParams = VirtualAllocEx(injecteeHandle, NULL, sizeof(LoaderArguments), MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
 	if (!WriteProcessMemory(injecteeHandle, addressOfParams, &lArgs, sizeof(LoaderArguments), 0)) {
 		printf("Error: WriteProcessMemory returned false. Are you running as admin?"
-			"LastErrorCode: %i - see https://bit.ly/2DuwywP \n", GetLastError());
+			"LastErrorCode: %i\n", GetLastError());
 		EndApplication();
 	}
 	printf("Paramater struct written to target.\n");
@@ -162,9 +162,13 @@ int main(int argc, char* argv[]) {
 	// Grab MonoLoaderDLL.dll's Inject method offset, add it to the injectee's base, 
 	// call it with the param struct, then close the handle.
 	uintptr_t targetFunctionAddress = GetMonoLoaderFuncAddress(monoLoaderDLLPath, injecteeHandle);
-	CreateRemoteThread(injecteeHandle, NULL, 0, (LPTHREAD_START_ROUTINE)(targetFunctionAddress), addressOfParams, 0, NULL);
-	CloseHandle(injecteeHandle);
-	printf("Closing handles.\n");
 
-	printf("\nDone. A MessageBox should have been spawned from the injected application with an error/success message.");
+	CreateRemoteThread(injecteeHandle, NULL, 0, (LPTHREAD_START_ROUTINE)(targetFunctionAddress), addressOfParams, 0, NULL);
+	if (!mProcessFunctions::mValidateHandle(injecteeHandle)) {
+		printf("Error: CreateRemoteThread call failed - Handle is invalid. Last error code: %i\n", GetLastError());
+		return 1;
+	}
+	CloseHandle(injecteeHandle);
+
+	printf("\nDone. A MessageBox should have been spawned from the injected application with an error/success message.\n");
 }
