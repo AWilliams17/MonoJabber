@@ -112,6 +112,7 @@ int main(int argc, char* argv[]) {
 		);
 		EndApplication();
 	}
+	printf("PID for target acquired.\n");
 
 	if (!DoesDLLExist(&dllPath)) {
 		printf("Error: The DLL at the specified location was not found.\n");
@@ -133,6 +134,7 @@ int main(int argc, char* argv[]) {
 		);
 		EndApplication();
 	}
+	printf("Target handle opened.\n");
 
 	if (!IsTarget64Bit(injecteeHandle)) {
 		printf("Error: The target is a 32 bit process - This tool does not (currently) support this.");
@@ -146,6 +148,7 @@ int main(int argc, char* argv[]) {
 		);
 		EndApplication();
 	}
+	printf("MonoLoader.dll injected.\n");
 
 	// Write the parameter struct to the injectee's memory
 	LPVOID addressOfParams = VirtualAllocEx(injecteeHandle, NULL, sizeof(LoaderArguments), MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
@@ -154,12 +157,14 @@ int main(int argc, char* argv[]) {
 			"LastErrorCode: %i - see https://bit.ly/2DuwywP \n", GetLastError());
 		EndApplication();
 	}
+	printf("Paramater struct written to target.\n");
 
 	// Grab MonoLoaderDLL.dll's Inject method offset, add it to the injectee's base, 
 	// call it with the param struct, then close the handle.
 	uintptr_t targetFunctionAddress = GetMonoLoaderFuncAddress(monoLoaderDLLPath, injecteeHandle);
 	CreateRemoteThread(injecteeHandle, NULL, 0, (LPTHREAD_START_ROUTINE)(targetFunctionAddress), addressOfParams, 0, NULL);
 	CloseHandle(injecteeHandle);
+	printf("Closing handles.\n");
 
 	printf("\nDone. A MessageBox should have been spawned from the injected application with an error/success message.");
 }
