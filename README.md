@@ -26,7 +26,11 @@ The difference in the injector is just how they get to the whole "call native Mo
 How mine works is: the frontend for the tool, *MonoJabber.exe*, simply takes the target, then injects a DLL, 'MonoLoaderDLL'. It is *MonoLoaderDLL* which does all the heavy lifting.  
 *MonoLoaderDLL* exports a single function: `Inject`, which takes one argument of type `void*`. 
  
-In MonoJabber.exe, a struct with information passed to the program is written to the memory of the target, and MonoJabber calls `CreateRemoteThread` passing the address of the struct to the `Inject` function. Then the Inject function calls `LoadLibrary` on `mono-2.0-bdwgc.dll` and then begins calling relevant functions from that DLL using information from the argument struct.
+In MonoJabber.exe, a struct with information passed to the program is written to the memory of the target, and MonoJabber calls `CreateRemoteThread` passing the address of the struct to the `Inject` function. Then the Inject function calls `LoadLibrary` on `mono-2.0-bdwgc.dll` and then begins calling relevant functions from that DLL using information from the argument struct.  
+  
+A pipe is used between the DLL and MonoJabber.exe with let's MonoJabber get the result of all the operations back so it can print it out. It used to use a messagebox for this,  
+but that was not very elegant and lead to instability in the target.  
+*Update*: Now that I've got pipes working I'm probably going to do away with the whole 'write parameter struct to the application' thing.
 
 # Resources Used
 https://github.com/corngood/mono/blob/master/mono/metadata/image.h  
