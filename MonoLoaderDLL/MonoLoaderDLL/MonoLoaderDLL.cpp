@@ -7,8 +7,17 @@
 #include <string>
 #include <WinUser.h>
 
+HANDLE GetPipe() {
+	HANDLE hPipe = CreateFile(TEXT("\\\\.\\pipe\\MLPipe"),
+		GENERIC_READ | GENERIC_WRITE,
+		0,
+		NULL,
+		OPEN_EXISTING,
+		0,
+		NULL);
 
-bool showMessageBox;
+	return hPipe;
+}
 
 void InitMonoFunctions(const HMODULE &MONO_HANDLE, MonoFunctions &MONO_FUNCTIONS) {
 	MONO_FUNCTIONS.mGetRootDomain = (t_mono_get_root_domain)GetProcAddress(MONO_HANDLE, "mono_get_root_domain");
@@ -81,10 +90,12 @@ void Inject(void* loaderArguments) {
 		LoadAndInvokePayload(resultMessage, *args, monoFunctions);
 	}
 
-	// This will remain commented out until I figure out why it is unstable at times and stable other times.
-	// Or, alternatively, I figure out a way to just store the result somewhere and have MonoJabber read it.
-	// That's probably easier.
-	//		MessageBox(NULL, resultMessage.c_str(), "Operation Result", MB_OK);
+	// Connect to the pipe in MonoJabber and send the result
+	HANDLE hPipe = GetPipe();
+	if (hPipe != INVALID_HANDLE_VALUE) {
+		WriteFile(hPipe, resultMessage.c_str(), resultMessage.length() + 1, NULL, NULL);
+		CloseHandle(hPipe);
+	}
 
 	FreeLibraryAndExitThread(NULL, 0);
 }

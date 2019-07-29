@@ -57,6 +57,19 @@ std::string GetMonoLoaderDLLPath() {
 	return pathToLoaderDLL;
 }
 
+HANDLE CreatePipe() {
+	HANDLE hPipe = ::CreateNamedPipe(("\\\\.\\pipe\\MLPipe"),
+		PIPE_ACCESS_DUPLEX,
+		PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_WAIT,
+		1,
+		4096,
+		4096,
+		NMPWAIT_USE_DEFAULT_WAIT,
+		NULL);
+
+	return hPipe;
+}
+
 LoaderArguments CreateArgsStruct(char* program_args[]) {
 	LoaderArguments loaderArgs;
 	strcpy_s(loaderArgs.DLL_PATH, program_args[2]);
@@ -167,6 +180,22 @@ int main(int argc, char* argv[]) {
 	if (!mProcessFunctions::mValidateHandle(injecteeHandle)) {
 		printf("Error: CreateRemoteThread call failed - Handle is invalid. Last error code: %i\n", GetLastError());
 		return 1;
+	}
+	else {
+		printf("CreateRemoteThread call succeeded - Creating pipe to receive results.\n");
+		HANDLE hPipe = CreatePipe();
+		char buffer[1024];
+		DWORD dwRead;
+		while (hPipe != INVALID_HANDLE_VALUE) {
+			if (ConnectNamedPipe(hPipe, NULL) != FALSE) {
+				while (ReadFile(hPipe, buffer, sizeof(buffer) - 1, &dwRead, NULL) != FALSE) {
+					printf("-Received result from MonoLoaderDLL-\n");
+					printf("MonoLoaderDLL says: %s\n", buffer);
+				}
+			}
+		}
+		printf("Pipe closed.\n");
+		DisconnectNamedPipe(hPipe);
 	}
 	CloseHandle(injecteeHandle);
 
