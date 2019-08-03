@@ -7,6 +7,7 @@
 #include <string>
 #include <WinUser.h>
 
+
 HANDLE GetPipe() {
 	HANDLE hPipe = CreateFile(TEXT("\\\\.\\pipe\\MLPipe"),
 		GENERIC_READ | GENERIC_WRITE,

@@ -48,7 +48,7 @@ std::string GetMonoLoaderDLLPath() {
 	std::string::size_type positionToTrunc = std::string(buffer).find_last_of("\\/");
 	std::string currentDirectory = std::string(buffer).substr(0, positionToTrunc);
 	std::string pathToLoaderDLL = currentDirectory + "\\MonoLoaderDLL.dll";
-	const char *pathArg = pathToLoaderDLL.c_str(); // Really don't like this.
+	const char *pathArg = pathToLoaderDLL.c_str();
 
 	if (!DoesDLLExist(&pathArg)) {
 		return "";
@@ -58,10 +58,10 @@ std::string GetMonoLoaderDLLPath() {
 }
 
 HANDLE CreatePipe() {
-	HANDLE hPipe = ::CreateNamedPipe(("\\\\.\\pipe\\MLPipe"),
+	HANDLE hPipe = ::CreateNamedPipe("\\\\.\\pipe\\MLPipe",
 		PIPE_ACCESS_DUPLEX,
 		PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_WAIT,
-		1,
+		PIPE_UNLIMITED_INSTANCES,
 		4096,
 		4096,
 		NMPWAIT_USE_DEFAULT_WAIT,
@@ -154,7 +154,7 @@ int main(int argc, char* argv[]) {
 		EndApplication();
 	}
 
-	// Inject MonoLoaderDLL.dll into the injectee
+	// Inject MonoLoaderDLL.dll into the target
 	if (!mMemoryFunctions::mInjectDLL(targetProcess, monoLoaderDLLPath)) {
 		printf("Error: Failed to inject MonoLoaderDLL.dll into the target process. Are you running as admin?"
 			"LastErrorCode: %i\n", GetLastError()
@@ -163,7 +163,7 @@ int main(int argc, char* argv[]) {
 	}
 	printf("MonoLoader.dll injected.\n");
 
-	// Write the parameter struct to the injectee's memory
+	// Write the parameter struct to the target's memory
 	LPVOID addressOfParams = VirtualAllocEx(injecteeHandle, NULL, sizeof(LoaderArguments), MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
 	if (!WriteProcessMemory(injecteeHandle, addressOfParams, &lArgs, sizeof(LoaderArguments), 0)) {
 		printf("Error: WriteProcessMemory returned false. Are you running as admin?"
@@ -172,7 +172,7 @@ int main(int argc, char* argv[]) {
 	}
 	printf("Paramater struct written to target.\n");
 
-	// Grab MonoLoaderDLL.dll's Inject method offset, add it to the injectee's base, 
+	// Grab MonoLoaderDLL.dll's Inject method offset, add it to the target's base, 
 	// call it with the param struct, then close the handle.
 	uintptr_t targetFunctionAddress = GetMonoLoaderFuncAddress(monoLoaderDLLPath, injecteeHandle);
 
@@ -186,18 +186,21 @@ int main(int argc, char* argv[]) {
 		HANDLE hPipe = CreatePipe();
 		char buffer[1024];
 		DWORD dwRead;
-		while (hPipe != INVALID_HANDLE_VALUE) {
-			if (ConnectNamedPipe(hPipe, NULL) != FALSE) {
-				while (ReadFile(hPipe, buffer, sizeof(buffer) - 1, &dwRead, NULL) != FALSE) {
-					printf("-Received result from MonoLoaderDLL-\n");
-					printf("MonoLoaderDLL says: %s\n", buffer);
-				}
+		if (hPipe != INVALID_HANDLE_VALUE) {
+			ConnectNamedPipe(hPipe, NULL); // Block until connection is made. TODO: Make asynchronous... Or atleast have a timeout.
+			while (ReadFile(hPipe, buffer, sizeof(buffer) - 1, &dwRead, NULL) != FALSE) {
+				printf("-Received result from MonoLoaderDLL-\n");
+				printf("MonoLoaderDLL says: %s\n", buffer);
 			}
+		} else {
+			printf("Error: CreateNamedPipe call failed - Handle is invalid. Last error code: %i\n", GetLastError());
+			printf("This means you won't be able to see any error message from the DLL - it'll fail silently.\n");
 		}
-		printf("Pipe closed.\n");
 		DisconnectNamedPipe(hPipe);
+		CloseHandle(hPipe);
 	}
 	CloseHandle(injecteeHandle);
 
 	printf("Done.\n");
+	return 0;
 }
