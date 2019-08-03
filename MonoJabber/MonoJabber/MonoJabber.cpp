@@ -112,6 +112,13 @@ int main(int argc, char* argv[]) {
 		);
 		EndApplication();
 	}
+
+	// Doing this until I can fix https://github.com/AWilliams17/MonoJabber/issues/1
+	printf(
+		"\n~~Warning: If this application is run as an administrator, " 
+		"it is possible that it will hang when waiting for the pipe to be connected to from the DLL.~~\n\n"
+	);
+	system("pause");
 	
 	const char *targetProcess = argv[1];
 	const char *dllPath = argv[2];
@@ -142,7 +149,7 @@ int main(int argc, char* argv[]) {
 
 	bool handleIsValid = mProcessFunctions::mValidateHandle(injecteeHandle);
 	if (!handleIsValid) {
-		printf("Error: Failed to get a handle to the target process. Are you running as admin?"
+		printf("Error: Failed to get a handle to the target process."
 			"LastErrorCode: %i\n", GetLastError()
 		);
 		EndApplication();
@@ -156,7 +163,7 @@ int main(int argc, char* argv[]) {
 
 	// Inject MonoLoaderDLL.dll into the target
 	if (!mMemoryFunctions::mInjectDLL(targetProcess, monoLoaderDLLPath)) {
-		printf("Error: Failed to inject MonoLoaderDLL.dll into the target process. Are you running as admin?"
+		printf("Error: Failed to inject MonoLoaderDLL.dll into the target process."
 			"LastErrorCode: %i\n", GetLastError()
 		);
 		EndApplication();
@@ -166,7 +173,7 @@ int main(int argc, char* argv[]) {
 	// Write the parameter struct to the target's memory
 	LPVOID addressOfParams = VirtualAllocEx(injecteeHandle, NULL, sizeof(LoaderArguments), MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
 	if (!WriteProcessMemory(injecteeHandle, addressOfParams, &lArgs, sizeof(LoaderArguments), 0)) {
-		printf("Error: WriteProcessMemory returned false. Are you running as admin?"
+		printf("Error: WriteProcessMemory returned false."
 			"LastErrorCode: %i\n", GetLastError());
 		EndApplication();
 	}
