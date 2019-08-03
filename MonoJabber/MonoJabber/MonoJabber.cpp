@@ -115,10 +115,9 @@ int main(int argc, char* argv[]) {
 
 	// Doing this until I can fix https://github.com/AWilliams17/MonoJabber/issues/1
 	printf(
-		"\n~~Warning: If this application is run as an administrator, " 
-		"it is possible that it will hang when waiting for the pipe to be connected to from the DLL.~~\n\n"
+		"~~Warning: If this application is run as an administrator, " 
+		"it is possible that it will hang when waiting for the pipe to be connected to from the DLL.~~\n"
 	);
-	system("pause");
 	
 	const char *targetProcess = argv[1];
 	const char *dllPath = argv[2];
