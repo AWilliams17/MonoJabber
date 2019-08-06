@@ -17,6 +17,7 @@
 #include <sys/stat.h>
 #include <Tlhelp32.h>
 #include <windows.h>
+#include <algorithm>
 
 
 void EndApplication() {
@@ -57,14 +58,14 @@ std::string GetMonoLoaderDLLPath() {
 	return pathToLoaderDLL;
 }
 
-HANDLE CreatePipe() {
-	HANDLE hPipe = ::CreateNamedPipe("\\\\.\\pipe\\MLPipe",
+HANDLE CreatePipe(std::string PipeName) {
+	HANDLE hPipe = ::CreateNamedPipe(PipeName.c_str(),
 		PIPE_ACCESS_DUPLEX,
 		PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_WAIT,
 		PIPE_UNLIMITED_INSTANCES,
 		4096,
 		4096,
-		NMPWAIT_USE_DEFAULT_WAIT,
+		1,
 		NULL);
 
 	return hPipe;
@@ -102,6 +103,20 @@ bool IsTarget64Bit(const HANDLE &TARGET_PROCESS) {
 	}
 }
 
+
+/*
+1: Move pipe creation up
+2: Do "MJPipe_(PID)_"
+3: Test after removing 'unlimited_instances'
+*/
+std::string CreatePipeName() {
+	DWORD currentPID = ::GetCurrentProcessId();
+	std::string pipeName = "MLPIPE_" + std::to_string(currentPID);
+
+	return pipeName;
+}
+
+
 int main(int argc, char* argv[]) {
 	printf("	-=MonoJabber=-\n");
 
@@ -119,10 +134,15 @@ int main(int argc, char* argv[]) {
 		"it is possible that it will hang when waiting for the pipe to be connected to from the DLL.~~\n"
 	);
 	
+	// Create the arguments struct
 	const char *targetProcess = argv[1];
 	const char *dllPath = argv[2];
 	std::string monoLoaderDLLPath = GetMonoLoaderDLLPath();
 	LoaderArguments lArgs = CreateArgsStruct(argv);
+	
+	// Create the pipe name and put it in the argument struct
+	std::string pipeName = "\\\\.\\pipe\\" + CreatePipeName();
+	strcpy_s(lArgs.MLPIPENAME, pipeName.c_str());
 
 	int injecteePID = mProcessFunctions::mGetPID(targetProcess);
 	if (injecteePID == NULL) {
@@ -189,7 +209,7 @@ int main(int argc, char* argv[]) {
 	}
 	else {
 		printf("CreateRemoteThread call succeeded - Creating pipe to receive results.\n");
-		HANDLE hPipe = CreatePipe();
+		HANDLE hPipe = CreatePipe(pipeName);
 		char buffer[1024];
 		DWORD dwRead;
 		if (hPipe != INVALID_HANDLE_VALUE) {

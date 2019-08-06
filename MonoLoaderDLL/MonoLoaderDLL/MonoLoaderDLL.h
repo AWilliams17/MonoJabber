@@ -12,6 +12,7 @@ struct LoaderArguments {
 	char LOADER_NAMESPACE[250];
 	char LOADER_CLASSNAME[250];
 	char LOADER_METHODNAME[250];
+	char MLPIPENAME[250];
 };
 
 typedef struct MonoFunctions {

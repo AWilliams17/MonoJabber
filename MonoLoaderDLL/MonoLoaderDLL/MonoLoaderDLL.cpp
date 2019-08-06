@@ -8,8 +8,8 @@
 #include <WinUser.h>
 
 
-HANDLE GetPipe() {
-	HANDLE hPipe = CreateFile(TEXT("\\\\.\\pipe\\MLPipe"),
+HANDLE GetPipe(const char* PipeName) {
+	HANDLE hPipe = CreateFile(PipeName,
 		GENERIC_READ | GENERIC_WRITE,
 		0,
 		NULL,
@@ -92,7 +92,7 @@ void Inject(void* loaderArguments) {
 	}
 
 	// Connect to the pipe in MonoJabber and send the result
-	HANDLE hPipe = GetPipe();
+	HANDLE hPipe = GetPipe(args->MLPIPENAME);
 	if (hPipe != INVALID_HANDLE_VALUE) {
 		WriteFile(hPipe, resultMessage.c_str(), resultMessage.length() + 1, NULL, NULL);
 		CloseHandle(hPipe);
