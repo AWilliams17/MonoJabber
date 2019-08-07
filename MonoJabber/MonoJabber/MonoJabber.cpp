@@ -40,6 +40,7 @@ uintptr_t GetMonoLoaderFuncAddress(const std::string &MONO_LOADER_DLL_PATH, cons
 	uintptr_t injectedLoaderBase = mProcessFunctions::mGetModuleAddress(INJECTEE_HANDLE, "MonoLoaderDLL.dll");
 	uintptr_t funcAddress = injectedLoaderBase + funcOffset;
 	FreeLibrary(loaderModule);
+
 	return funcAddress;
 }
 
@@ -59,14 +60,30 @@ std::string GetMonoLoaderDLLPath() {
 }
 
 HANDLE CreatePipe(const std::string &PIPENAME) {
+	// Give access to everyone so that running as admin does not prevent the injected DLL
+	// in a non-admin application from connecting.
+	PSECURITY_DESCRIPTOR pSecurityDesc = (PSECURITY_DESCRIPTOR)LocalAlloc(LPTR, SECURITY_DESCRIPTOR_MIN_LENGTH);
+
+	if (!pSecurityDesc ||
+		!InitializeSecurityDescriptor(pSecurityDesc, SECURITY_DESCRIPTOR_REVISION) ||
+		!SetSecurityDescriptorDacl(pSecurityDesc, TRUE, NULL, FALSE)) {
+
+		return NULL;
+	}
+
+	SECURITY_ATTRIBUTES securityAttributes;
+	securityAttributes.nLength = sizeof(securityAttributes);
+	securityAttributes.lpSecurityDescriptor = pSecurityDesc;
+	securityAttributes.bInheritHandle = FALSE;
+
 	HANDLE hPipe = ::CreateNamedPipe(PIPENAME.c_str(),
 		PIPE_ACCESS_DUPLEX,
 		PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_WAIT,
-		PIPE_UNLIMITED_INSTANCES,
+		1,
 		4096,
 		4096,
 		1,
-		NULL);
+		&securityAttributes);
 
 	return hPipe;
 }
@@ -77,6 +94,7 @@ LoaderArguments CreateArgsStruct(char* program_args[]) {
 	strcpy_s(loaderArgs.LOADER_NAMESPACE, program_args[3]);
 	strcpy_s(loaderArgs.LOADER_CLASSNAME, program_args[4]);
 	strcpy_s(loaderArgs.LOADER_METHODNAME, program_args[5]);
+
 	return loaderArgs;
 }
 
@@ -103,13 +121,6 @@ bool IsTarget64Bit(const HANDLE &TARGET_PROCESS) {
 	}
 }
 
-std::string CreatePipeName() {
-	DWORD currentPID = ::GetCurrentProcessId();
-	std::string pipeName = "MLPIPE_" + std::to_string(currentPID);
-
-	return pipeName;
-}
-
 int main(int argc, char* argv[]) {
 	printf("	-=MonoJabber=-\n");
 
@@ -121,12 +132,6 @@ int main(int argc, char* argv[]) {
 		EndApplication();
 	}
 
-	// Doing this until I can fix https://github.com/AWilliams17/MonoJabber/issues/1
-	printf(
-		"~~Warning: If this application is run as an administrator, " 
-		"it is possible that it will hang when waiting for the pipe to be connected to from the DLL.~~\n"
-	);
-	
 	// Create the arguments struct
 	const char *targetProcess = argv[1];
 	const char *dllPath = argv[2];
@@ -134,7 +139,7 @@ int main(int argc, char* argv[]) {
 	LoaderArguments lArgs = CreateArgsStruct(argv);
 	
 	// Create the pipe name and put it in the argument struct
-	std::string pipeName = "\\\\.\\pipe\\" + CreatePipeName();
+	std::string pipeName = "\\\\.\\pipe\\MLPIPE_" + std::to_string(::GetCurrentProcessId());
 	strcpy_s(lArgs.MLPIPENAME, pipeName.c_str());
 
 	int injecteePID = mProcessFunctions::mGetPID(targetProcess);
@@ -191,29 +196,28 @@ int main(int argc, char* argv[]) {
 	}
 	printf("Paramater struct written to target.\n");
 
-	// Grab MonoLoaderDLL.dll's Inject method offset, add it to the target's base, 
-	// call it with the param struct, then close the handle.
+	// Grab MonoLoaderDLL.dll's Inject method offset, add it to the target's base...
 	uintptr_t targetFunctionAddress = GetMonoLoaderFuncAddress(monoLoaderDLLPath, injecteeHandle);
-
+	// ...call it with the param struct
 	CreateRemoteThread(injecteeHandle, NULL, 0, (LPTHREAD_START_ROUTINE)(targetFunctionAddress), addressOfParams, 0, NULL);
 	if (!mProcessFunctions::mValidateHandle(injecteeHandle)) {
 		printf("Error: CreateRemoteThread call failed - Handle is invalid. Last error code: %i\n", GetLastError());
-		return 1;
+		EndApplication();
 	}
 	else {
 		printf("CreateRemoteThread call succeeded - Creating pipe to receive results.\n");
 		HANDLE hPipe = CreatePipe(pipeName);
 		char buffer[1024];
 		DWORD dwRead;
-		if (hPipe != INVALID_HANDLE_VALUE) {
+		if (hPipe == INVALID_HANDLE_VALUE || hPipe == NULL) {
+			printf("Error: CreateNamedPipe call failed - Handle is invalid. Last error code: %i\n", GetLastError());
+			printf("This means you won't be able to see any error message from the DLL - it'll fail silently.\n");
+		} else {
 			ConnectNamedPipe(hPipe, NULL); // Block until connection is made. TODO: Make asynchronous... Or atleast have a timeout.
 			while (ReadFile(hPipe, buffer, sizeof(buffer) - 1, &dwRead, NULL) != FALSE) {
 				printf("-Received result from MonoLoaderDLL-\n");
 				printf("MonoLoaderDLL says: %s\n", buffer);
 			}
-		} else {
-			printf("Error: CreateNamedPipe call failed - Handle is invalid. Last error code: %i\n", GetLastError());
-			printf("This means you won't be able to see any error message from the DLL - it'll fail silently.\n");
 		}
 		DisconnectNamedPipe(hPipe);
 		CloseHandle(hPipe);
@@ -221,5 +225,4 @@ int main(int argc, char* argv[]) {
 	CloseHandle(injecteeHandle);
 
 	printf("Done.\n");
-	return 0;
 }

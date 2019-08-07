@@ -4,4 +4,8 @@
     <LocalDebuggerCommandArguments>"SCPSL.exe" "D:\Source\SCP-Exposed-Establishment\SCPEE\bin\\x64\Release\SCPEE.dll" "SCPEE.NotEvil" "EELoader" "Init"</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <LocalDebuggerCommandArguments>"SCPSL.exe" "D:\Source\SCP-Exposed-Establishment\SCPEE\bin\\x64\Release\SCPEE.dll" "SCPEE.NotEvil" "EELoader" "Init"</LocalDebuggerCommandArguments>
+    <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
+  </PropertyGroup>
 </Project>
