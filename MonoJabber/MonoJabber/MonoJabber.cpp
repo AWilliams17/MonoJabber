@@ -58,8 +58,8 @@ std::string GetMonoLoaderDLLPath() {
 	return pathToLoaderDLL;
 }
 
-HANDLE CreatePipe(std::string PipeName) {
-	HANDLE hPipe = ::CreateNamedPipe(PipeName.c_str(),
+HANDLE CreatePipe(const std::string &PIPENAME) {
+	HANDLE hPipe = ::CreateNamedPipe(PIPENAME.c_str(),
 		PIPE_ACCESS_DUPLEX,
 		PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_WAIT,
 		PIPE_UNLIMITED_INSTANCES,
@@ -103,19 +103,12 @@ bool IsTarget64Bit(const HANDLE &TARGET_PROCESS) {
 	}
 }
 
-
-/*
-1: Move pipe creation up
-2: Do "MJPipe_(PID)_"
-3: Test after removing 'unlimited_instances'
-*/
 std::string CreatePipeName() {
 	DWORD currentPID = ::GetCurrentProcessId();
 	std::string pipeName = "MLPIPE_" + std::to_string(currentPID);
 
 	return pipeName;
 }
-
 
 int main(int argc, char* argv[]) {
 	printf("	-=MonoJabber=-\n");
